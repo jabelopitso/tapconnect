@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Initd-It | Digital Business Card</title>
+<style>
+  :root { --brand:#0b5fff; --ink:#14181f; --muted:#5b6472; --bg:#f3f5f9; --card:#fff; --line:#e3e7ee; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width:480px; margin:0 auto; padding:16px; }
+  .card { background:var(--card); border-radius:16px; box-shadow:0 2px 12px rgba(20,24,31,.08); overflow:hidden; margin-bottom:16px; }
+  .hero { background:var(--brand); color:#fff; padding:28px 20px; text-align:center; }
+  .hero { background:#0b1226; }
+  .logo { width:72px; height:72px; border-radius:50%; background:#fff; color:var(--brand); display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; margin:0 auto 12px; overflow:hidden; }
+  /* Logo file has wide empty margins, so it is cropped to the artwork via background sizing */
+  .logo.img { width:220px; height:110px; border-radius:0; background-color:transparent; background-repeat:no-repeat; background-size:360px 360px; background-position:-41px -125px; }
+  .hero h1 { margin:0; font-size:22px; }
+  .hero p { margin:4px 0 0; opacity:.9; font-size:14px; }
+  .body { padding:16px 20px; }
+  .row { display:flex; gap:12px; padding:10px 0; border-bottom:1px solid var(--line); align-items:center; }
+  .row:last-child { border-bottom:0; }
+  .row small { display:block; color:var(--muted); font-size:12px; }
+  .row a { color:var(--ink); text-decoration:none; font-weight:600; word-break:break-word; }
+  .ico { width:32px; text-align:center; font-size:18px; }
+  button, .btn { display:block; width:100%; padding:14px; border:0; border-radius:10px; font-size:16px; font-weight:700; cursor:pointer; text-align:center; text-decoration:none; }
+  .primary { background:var(--brand); color:#fff; }
+  .secondary { background:#fff; color:var(--brand); border:2px solid var(--brand); margin-top:10px; }
+  h2 { margin:0 0 4px; font-size:18px; }
+  .sub { margin:0 0 14px; color:var(--muted); font-size:14px; }
+  label { display:block; font-size:13px; font-weight:600; margin:10px 0 4px; }
+  input, textarea { width:100%; padding:12px; border:1px solid var(--line); border-radius:8px; font:inherit; background:#fafbfd; }
+  input:focus, textarea:focus { outline:2px solid var(--brand); background:#fff; }
+  .msg { margin-top:12px; padding:12px; border-radius:8px; font-size:14px; display:none; }
+  .ok { background:#e7f7ec; color:#14612c; display:block; }
+  .err { background:#fdecec; color:#8a1c1c; display:block; }
+  .hp { position:absolute; left:-9999px; }
+  footer { text-align:center; color:var(--muted); font-size:12px; padding:8px 0 24px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. INITD-IT CARD -->
+  <div class="card">
+    <div class="hero">
+      <div class="logo" id="logo">ID</div>
+      <h1 id="company"></h1>
+      <p id="tagline"></p>
+    </div>
+    <div class="body">
+      <div id="rows"></div>
+      <div style="margin-top:14px">
+        <button class="primary" id="saveBtn">⬇ Save contact to my phone</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. CLIENT DETAILS FORM -->
+  <div class="card">
+    <div class="body">
+      <h2>Share your details with us</h2>
+      <p class="sub">Nice to meet you! Leave your details and we'll follow up.</p>
+      <form id="form" novalidate>
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off">
+        <label for="name">Full name *</label>
+        <input id="name" name="name" autocomplete="name" required>
+        <label for="company_c">Company</label>
+        <input id="company_c" name="company" autocomplete="organization">
+        <label for="role">Job title</label>
+        <input id="role" name="role" autocomplete="organization-title">
+        <label for="email">Email *</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+        <label for="phone">Phone / WhatsApp</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel">
+        <label for="note">How can we help? (optional)</label>
+        <textarea id="note" name="note" rows="3"></textarea>
+        <div style="margin-top:14px">
+          <button class="primary" type="submit" id="sendBtn">Send my details to Initd-It</button>
+        </div>
+        <div id="fallback" style="display:none">
+          <a class="btn secondary" id="mailBtn" href="#">✉ Send by email</a>
+          <a class="btn secondary" id="waBtn" href="#" target="_blank" rel="noopener">💬 Send by WhatsApp</a>
+        </div>
+        <div class="msg" id="msg"></div>
+      </form>
+    </div>
+  </div>
+
+  <footer>© Initd-It</footer>
+</div>
+
+<script>
+/* ============ EDIT THIS SECTION ============ */
+const CONFIG = {
+  company:  "Initd-It",
+  tagline:  "Serving clients across MEA",
+  person:   "Initd-It Sales",       // name shown on the card / saved contact
+  title:    "Sales Team",
+  phone:    "+27872658899",         // international format
+  email:    "sales@initd-it.co.za",
+  website:  "https://www.initd-it.co.za",
+  linkedin: "https://www.linkedin.com/company/initd-it-services-za/",
+  address:  "Block F, Wedgewood Office Park, 3 Muswell Road, Bryanston, South Africa, 2191",
+  logoUrl:  "logo.png",             // keep logo.png in the same folder as this file
+  whatsapp: "",                     // digits only, no + (e.g. 27821234567). Leave "" to hide the WhatsApp button.
+
+  // Where client details are sent. Create a free form at https://formspree.io
+  // (or any service that accepts a POST) and paste its URL here, e.g.
+  // "https://formspree.io/f/xxxxxxxx". Leave "" to use the email/WhatsApp fallback.
+  formEndpoint: ""
+};
+/* ========================================== */
+
+const $ = id => document.getElementById(id);
+$("company").textContent = CONFIG.company;
+$("tagline").textContent = CONFIG.tagline;
+document.title = CONFIG.company + " | Digital Business Card";
+$("logo").textContent = CONFIG.company.slice(0,2).toUpperCase();
+if (CONFIG.logoUrl) {
+  const probe = new Image();
+  probe.onload = () => {
+    const l = $("logo");
+    l.textContent = "";
+    l.className = "logo img";
+    l.style.backgroundImage = "url('" + CONFIG.logoUrl + "')";
+    l.setAttribute("role", "img");
+    l.setAttribute("aria-label", CONFIG.company);
+    $("company").style.display = "none"; // logo already carries the name
+  };
+  probe.src = CONFIG.logoUrl; // if the file is missing, the initials stay
+}
+
+const rows = [
+  ["👤", CONFIG.person + (CONFIG.title ? " · " + CONFIG.title : ""), "Contact", null],
+  ["📞", CONFIG.phone, "Phone", "tel:" + CONFIG.phone],
+  ["✉️", CONFIG.email, "Email", "mailto:" + CONFIG.email],
+  ["🌐", CONFIG.website.replace(/^https?:\/\//,""), "Website", CONFIG.website],
+  ["💼", "Follow us on LinkedIn", "LinkedIn", CONFIG.linkedin],
+  ["📍", CONFIG.address, "Location", "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(CONFIG.address)]
+];
+$("rows").innerHTML = rows.map(r =>
+  '<div class="row"><div class="ico">' + r[0] + '</div><div><small>' + r[2] + '</small>' +
+  (r[3] ? '<a href="' + r[3] + '">' + r[1] + '</a>' : '<strong>' + r[1] + '</strong>') +
+  '</div></div>').join("");
+
+/* ---- Save contact (vCard) ---- */
+$("saveBtn").onclick = () => {
+  const parts = CONFIG.person.trim().split(/\s+/);
+  const last = parts.length > 1 ? parts.pop() : "";
+  const first = parts.join(" ");
+  const vcf = [
+    "BEGIN:VCARD","VERSION:3.0",
+    "N:" + last + ";" + first + ";;;",
+    "FN:" + CONFIG.person,
+    "ORG:" + CONFIG.company,
+    "TITLE:" + CONFIG.title,
+    "TEL;TYPE=WORK,VOICE:" + CONFIG.phone,
+    "EMAIL;TYPE=WORK:" + CONFIG.email,
+    "URL:" + CONFIG.website,
+    "X-SOCIALPROFILE;TYPE=linkedin:" + CONFIG.linkedin,
+    "ADR;TYPE=WORK:;;" + CONFIG.address + ";;;;",
+    "END:VCARD"
+  ].join("\r\n");
+  const blob = new Blob([vcf], { type: "text/vcard;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = CONFIG.company.replace(/\s+/g,"-") + ".vcf";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  $("form").scrollIntoView({ behavior: "smooth" });
+};
+
+/* ---- Send client's details back ---- */
+function show(text, ok) { const m = $("msg"); m.textContent = text; m.className = "msg " + (ok ? "ok" : "err"); }
+
+function summary(d) {
+  return "New contact from the Initd-It business card\n\n" +
+    "Name: " + d.name + "\nCompany: " + d.company + "\nTitle: " + d.role +
+    "\nEmail: " + d.email + "\nPhone: " + d.phone + "\nNote: " + d.note;
+}
+
+function setFallback(d) {
+  const text = summary(d);
+  $("mailBtn").href = "mailto:" + CONFIG.email + "?subject=" + encodeURIComponent("Contact details from " + d.name) + "&body=" + encodeURIComponent(text);
+  if (CONFIG.whatsapp) $("waBtn").href = "https://wa.me/" + CONFIG.whatsapp + "?text=" + encodeURIComponent(text);
+  else $("waBtn").style.display = "none";
+  $("fallback").style.display = "block";
+}
+
+$("form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const f = e.target;
+  const d = Object.fromEntries(new FormData(f).entries());
+  if (d.website) return; // spam trap
+  if (!d.name.trim() || !/^\S+@\S+\.\S+$/.test(d.email)) { show("Please enter your name and a valid email.", false); return; }
+
+  if (!CONFIG.formEndpoint) {
+    setFallback(d);
+    show("Almost done: choose how to send your details to us below.", true);
+    return;
+  }
+  const btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    const r = await fetch(CONFIG.formEndpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json" },
+      body: JSON.stringify({ name:d.name, company:d.company, role:d.role, email:d.email, phone:d.phone, note:d.note, source:"QR business card" })
+    });
+    if (!r.ok) throw new Error();
+    f.reset();
+    show("Thank you! Your details have been sent to " + CONFIG.company + ".", true);
+  } catch (err) {
+    setFallback(d);
+    show("We couldn't send that automatically. Please use one of the options below.", false);
+  } finally { btn.disabled = false; btn.textContent = "Send my details to Initd-It"; }
+});
+</script>
+</body>
+</html>
